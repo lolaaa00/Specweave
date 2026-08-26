@@ -76,7 +76,7 @@ The generated wallet is honest about its limits: the UI warns on creation, requi
 | **Network** | StudioNet (chain 61999) |
 | **RPC** | `https://studio.genlayer.com/api` |
 | **Contract** | `0xC5d26b02f6829244031771c39dbb5cd15162b52A` |
-| **Frontend** | Vercel (see submission) |
+| **Frontend** | https://specweave.vercel.app |
 
 ---
 
@@ -93,11 +93,11 @@ Contract tests use a local `_GL` stub — no network required. The stub implemen
 
 ## Measured results (StudioNet)
 
-| Operation | Typical time |
-|---|---|
-| `propose_release` | ~15s (no AI) |
-| `review_release` (AI consensus) | 2–4 minutes |
-| `finalize_release` | ~15s (no AI) |
+| Operation | Typical time | Example TX |
+|---|---|---|
+| `propose_release` | ~15s (no AI) | `0x8842035b…702c2e9` |
+| `review_release` (AI consensus) | 2–4 minutes | `0xdeec18c0…8bfb009` |
+| `finalize_release` | ~15s (no AI) | `0x9326df13…d776fc4` |
 
 ---
 
