@@ -26,6 +26,7 @@ export function AppHeader() {
   const [importInput, setImportInput] = useState("");
   const [importError, setImportError] = useState("");
   const [exportedKey, setExportedKey] = useState<string | null>(null);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const shortAddr = account
     ? account.slice(0, 6) + "…" + account.slice(-4)
@@ -64,7 +65,9 @@ export function AppHeader() {
   };
 
   return (
-    <header className="app-header">
+    <>
+    <a href="#main-content" className="skip-link">Skip to content</a>
+    <header className="app-header" role="banner">
       <div style={{ display: "flex", alignItems: "center", padding: "0 1.25rem", height: "2.75rem", gap: "1.5rem" }}>
         {/* Logo */}
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexShrink: 0 }}>
@@ -85,14 +88,15 @@ export function AppHeader() {
           </span>
         </div>
 
-        {/* Navigation */}
-        <nav style={{ display: "flex", gap: "0.1rem", flex: 1 }}>
+        {/* Desktop Navigation */}
+        <nav className="nav-desktop" aria-label="Main navigation" style={{ display: "flex", gap: "0.1rem", flex: 1 }}>
           {NAV_LINKS.map(({ href, label }) => {
             const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
             return (
               <Link
                 key={href}
                 href={href}
+                aria-current={active ? "page" : undefined}
                 style={{
                   padding: "0.25rem 0.6rem",
                   fontSize: "12px",
@@ -109,6 +113,18 @@ export function AppHeader() {
             );
           })}
         </nav>
+
+        {/* Hamburger (mobile only) */}
+        <button
+          className="nav-hamburger btn-secondary"
+          aria-label={mobileNavOpen ? "Close navigation" : "Open navigation"}
+          aria-expanded={mobileNavOpen}
+          aria-controls="mobile-nav"
+          style={{ fontSize: "16px", padding: "0.2rem 0.5rem", marginLeft: "auto" }}
+          onClick={() => setMobileNavOpen(v => !v)}
+        >
+          {mobileNavOpen ? "✕" : "☰"}
+        </button>
 
         {/* Wallet chrome */}
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexShrink: 0, position: "relative" }}>
@@ -247,5 +263,26 @@ export function AppHeader() {
         </div>
       </div>
     </header>
+
+    {/* Mobile navigation drawer */}
+    {mobileNavOpen && (
+      <nav id="mobile-nav" className="mobile-nav-drawer" aria-label="Mobile navigation">
+        {NAV_LINKS.map(({ href, label }) => {
+          const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={active ? "active" : ""}
+              aria-current={active ? "page" : undefined}
+              onClick={() => setMobileNavOpen(false)}
+            >
+              {label}
+            </Link>
+          );
+        })}
+      </nav>
+    )}
+    </>
   );
 }

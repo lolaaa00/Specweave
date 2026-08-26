@@ -75,7 +75,7 @@ The generated wallet is honest about its limits: the UI warns on creation, requi
 |---|---|
 | **Network** | StudioNet (chain 61999) |
 | **RPC** | `https://studio.genlayer.com/api` |
-| **Contract** | `0xC5d26b02f6829244031771c39dbb5cd15162b52A` |
+| **Contract** | `0x7853E72CDaB5e9CDd65d21E8491f3B35FC6c5e03` |
 | **Frontend** | https://specweave.vercel.app |
 
 ---
@@ -84,7 +84,7 @@ The generated wallet is honest about its limits: the UI warns on creation, requi
 
 | Suite | Count | Command |
 |---|---|---|
-| Contract (pytest) | **43 tests** | `python3 -m pytest tests/direct/` |
+| Contract (pytest) | **96 tests** | `python3 -m pytest tests/direct/` |
 | Frontend (vitest) | **16 tests** | `cd apps/web && npx vitest run` |
 
 Contract tests use a local `_GL` stub — no network required. The stub implements `gl.eq_principle.prompt_comparative` (calls `leader_fn()` directly), `gl.vm.UserError`, VecDB, and storage — so the full business logic runs deterministically.
@@ -108,7 +108,7 @@ Contract tests use a local `_GL` stub — no network required. The stub implemen
 cd apps/web && npm install
 
 # Set contract address (already in .env.local)
-# NEXT_PUBLIC_SPECWEAVE_CONTRACT=0xC5d26b02f6829244031771c39dbb5cd15162b52A
+# NEXT_PUBLIC_SPECWEAVE_CONTRACT=0x7853E72CDaB5e9CDd65d21E8491f3B35FC6c5e03
 
 # Start dev server
 npm run dev
@@ -116,10 +116,10 @@ npm run dev
 
 ```bash
 # Seed a fresh contract (after deploy)
-node scripts/seed-demo.mjs
+cd apps/web && PRIVATE_KEY=0x<key> node seed.mjs
 
-# Full lifecycle demo
-node scripts/lifecycle-demo.mjs
+# Full lifecycle demo (propose → AI review → finalize)
+cd apps/web && PRIVATE_KEY=0x<key> node lifecycle-demo.mjs
 ```
 
 ---

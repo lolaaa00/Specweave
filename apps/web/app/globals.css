@@ -483,8 +483,80 @@ nav a {
   }
 }
 
+/* ─── Focus ──────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--cobalt);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* ─── Skip link ──────────────────────────────────────────────────── */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 9999;
+  padding: 0.5rem 1rem;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 0 0 4px 0;
+}
+.skip-link:focus {
+  left: 0;
+}
+
 /* ─── Mobile ─────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   html { font-size: 14px; }
   .doc-layout { grid-template-columns: 2.25rem 1fr; }
+
+  .app-header .nav-desktop { display: none !important; }
+  .app-header .nav-hamburger { display: flex !important; }
+
+  /* Mobile nav drawer */
+  .mobile-nav-drawer {
+    position: fixed;
+    inset: 0;
+    top: 2.75rem;
+    background: var(--paper);
+    z-index: 99;
+    padding: 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    border-top: 1px solid var(--border);
+    animation: fadeIn 0.15s ease-out both;
+  }
+  .mobile-nav-drawer a {
+    display: block;
+    padding: 0.75rem 0.5rem;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--ink);
+    text-decoration: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .mobile-nav-drawer a.active {
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  /* Stack wallet chrome on mobile */
+  .wallet-row {
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  /* Wide tables scroll */
+  .spec-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (min-width: 769px) {
+  .app-header .nav-hamburger { display: none !important; }
+  .app-header .nav-desktop { display: flex !important; }
 }
