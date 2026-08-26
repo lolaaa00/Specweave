@@ -215,7 +215,7 @@ function ProductHero({ compact = false }: { compact?: boolean }) {
       }}>
         <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginBottom: "0.5rem" }}>
           <span style={{ fontWeight: 700, fontSize: "13px" }}>SpecWeave</span>
-          <span className="provenance-tag" style={{ fontSize: "10px" }}>· studionet · 0xC5d2…b52A</span>
+          <span className="provenance-tag" style={{ fontSize: "10px" }}>· studionet · 0x7853…5e03</span>
         </div>
         <p style={{ margin: 0, fontSize: "12px", color: "var(--ink-muted)", lineHeight: 1.6 }}>
           Semantic release gate for open standards — GenLayer validators independently review each changed clause via{" "}
@@ -276,7 +276,7 @@ function ProductHero({ compact = false }: { compact?: boolean }) {
       <div style={{ display: "flex", gap: "1rem", fontSize: "11px", color: "var(--ink-faint)", borderTop: "1px solid var(--border)", paddingTop: "0.65rem", flexWrap: "wrap" }}>
         <span className="font-mono-spec" style={{ fontSize: "10px" }}>chain:61999</span>
         <span>·</span>
-        <span className="font-mono-spec" style={{ fontSize: "10px" }}>0xC5d2…b52A</span>
+        <span className="font-mono-spec" style={{ fontSize: "10px" }}>0x7853…5e03</span>
         <span>·</span>
         <span>96 contract tests</span>
         <span>·</span>
