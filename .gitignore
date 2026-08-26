@@ -1,0 +1,17 @@
+node_modules/
+.next/
+.vercel/
+dist/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+.DS_Store
+
+# local env with secrets — NEXT_PUBLIC_* vars are safe but keeping .env.local out of habit
+# (it only has public vars here, but the pattern protects future secrets)
+# apps/web/.env.local  ← actually committing this so the contract address is in the repo
+
+# build artifacts
+apps/web/.next/
+apps/web/out/
