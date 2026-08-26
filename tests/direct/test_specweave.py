@@ -157,6 +157,16 @@ INITIAL_MANIFEST_DIGEST = "sha256:" + "d" * 64
 
 def make_contract():
     c = SpecWeave()
+    # GenVM's allow_storage initializes these from class annotations at runtime.
+    # In the test stub (TreeMap = dict, VecDB = _VecDB) we wire them up manually.
+    c.standards           = {}
+    c.clauses             = {}
+    c.candidates          = {}
+    c.proposals           = {}
+    c.supersession_edges  = {}
+    c.editors             = {}
+    c.standard_clause_ids = {}
+    c.vectors             = _VecDB()
     _GL.message.sender_address = STEWARD
     return c
 

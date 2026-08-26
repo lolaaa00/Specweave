@@ -217,16 +217,6 @@ class SpecWeave(gl.Contract):
     ]
 
     def __init__(self) -> None:
-        # Storage maps (initialized to empty dicts; GenVM's allow_storage handles this in prod)
-        self.standards           = {}
-        self.clauses             = {}
-        self.candidates          = {}
-        self.proposals           = {}
-        self.supersession_edges  = {}
-        self.editors             = {}
-        self.standard_clause_ids = {}
-        self.vectors             = genlayer_embeddings.VecDB()
-
         self.standard_count          = u256(0)
         self.clause_count            = u256(0)
         self.candidate_count         = u256(0)
