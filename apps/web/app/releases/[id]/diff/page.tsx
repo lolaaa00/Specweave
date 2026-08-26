@@ -31,19 +31,20 @@ export default function DiffPage({ params }: { params: Promise<{ id: string }> }
     if (!r.ok) { setError(r.message); setLoading(false); return; }
     setProposal(r.data);
 
-    // Load changed clauses
-    const ids: number[] = JSON.parse(r.data.changed_clause_ids_json || "[]");
+    // Load changed clauses — IDs come back as strings from the contract
+    const rawIds: unknown[] = JSON.parse(r.data.changed_clause_ids_json || "[]");
+    const ids: number[] = rawIds.map(id => Number(id));
     const clauseResults = await Promise.all(ids.map(cid => ds.getClause(cid)));
     setChangedClauses(clauseResults.filter(cr => cr.ok).map(cr => (cr as { ok: true; data: Clause }).data));
 
-    // Load overlaps for each changed clause
-    if (r.data.status_name !== "PROPOSED" && r.data.status_name !== "REVISION_REQUIRED") {
-      setOverlaps([]);
-    } else {
+    // Load overlaps only for PROPOSED status (before review runs)
+    if (r.data.status_name === "PROPOSED") {
       const overlapResults = await Promise.all(
         ids.map((_, i) => ds.previewOverlaps(proposalId, i, 5))
       );
       setOverlaps(overlapResults.filter(o => o.ok).map(o => (o as { ok: true; data: PreviewOverlaps }).data));
+    } else {
+      setOverlaps([]);
     }
 
     setLoading(false);
