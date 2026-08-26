@@ -95,9 +95,9 @@ Contract tests use a local `_GL` stub — no network required. The stub implemen
 
 | Operation | Typical time | Example TX |
 |---|---|---|
-| `propose_release` | ~15s (no AI) | `0x8842035b…702c2e9` |
-| `review_release` (AI consensus) | 2–4 minutes | `0xdeec18c0…8bfb009` |
-| `finalize_release` | ~15s (no AI) | `0x9326df13…d776fc4` |
+| `propose_release` | ~30s (no AI) | `0x7158ba6d98afdbf9777d8483b5c05980a5c83e009a526868fb86186d65c16f70` |
+| `review_release` (AI consensus) | ~90s | `0xe75c18bbcd8fcca4331533019c066fcb501d27eabb48dccd2c246b17fe4d23da` |
+| `finalize_release` | ~115s (no AI) | `0xce2cedbaa639177eb27b452bf7f5b140569ca818c7f6069cc854b98aeaca14bf` |
 
 ---
 
