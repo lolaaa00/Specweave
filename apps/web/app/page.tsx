@@ -278,7 +278,7 @@ function ProductHero({ compact = false }: { compact?: boolean }) {
         <span>·</span>
         <span className="font-mono-spec" style={{ fontSize: "10px" }}>0xC5d2…b52A</span>
         <span>·</span>
-        <span>43 contract tests</span>
+        <span>96 contract tests</span>
         <span>·</span>
         <span>gl.eq_principle.prompt_comparative</span>
       </div>

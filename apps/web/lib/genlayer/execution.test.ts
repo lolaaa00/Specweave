@@ -123,7 +123,7 @@ describe("parseClauseDecisions", () => {
 
   it("parses valid decisions array", () => {
     const arr = [
-      { record_id: 0, clause_id: "4.2", decision: "COHERENT_SUPERSESSION", supersedes: ["4.2"], reason: "ok", confidence_band: "HIGH" },
+      { candidate_record_id: 0, clause_id: "4.2", decision: "COHERENT_SUPERSESSION", supersedes: ["4.2"], reason: "ok", confidence_band: "HIGH" },
     ];
     const result = parseClauseDecisions(JSON.stringify(arr));
     expect(result).toHaveLength(1);

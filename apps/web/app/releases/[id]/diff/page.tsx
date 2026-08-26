@@ -4,7 +4,7 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { ds } from "@/lib/genlayer/data-source";
 import * as contract from "@/lib/genlayer/contract";
-import type { ReleaseProposal, Clause, PreviewOverlaps, ParsedClauseDecision } from "@/lib/genlayer/schema";
+import type { ReleaseProposal, CandidateClause, Clause, PreviewOverlaps, ParsedClauseDecision } from "@/lib/genlayer/schema";
 import { parseClauseDecisions } from "@/lib/genlayer/schema";
 import { StatusBadge, DecisionBadge, NormativeBadge } from "@/components/ui/StatusBadge";
 import { TransactionRail, type TxState } from "@/components/ui/TransactionRail";
@@ -19,7 +19,8 @@ export default function DiffPage({ params }: { params: Promise<{ id: string }> }
   const { account, mode } = useWallet();
 
   const [proposal, setProposal] = useState<ReleaseProposal | null>(null);
-  const [changedClauses, setChangedClauses] = useState<Clause[]>([]);
+  const [candidates, setCandidates] = useState<CandidateClause[]>([]);
+  const [previousClauses, setPreviousClauses] = useState<Map<number, Clause>>(new Map());
   const [overlaps, setOverlaps] = useState<PreviewOverlaps[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,13 +32,26 @@ export default function DiffPage({ params }: { params: Promise<{ id: string }> }
     if (!r.ok) { setError(r.message); setLoading(false); return; }
     setProposal(r.data);
 
-    // Load changed clauses — IDs come back as strings from the contract
-    const rawIds: unknown[] = JSON.parse(r.data.changed_clause_ids_json || "[]");
+    // Load candidate records (the actual proposed text)
+    const rawIds: unknown[] = JSON.parse(r.data.candidate_ids_json || "[]");
     const ids: number[] = rawIds.map(id => Number(id));
-    const clauseResults = await Promise.all(ids.map(cid => ds.getClause(cid)));
-    setChangedClauses(clauseResults.filter(cr => cr.ok).map(cr => (cr as { ok: true; data: Clause }).data));
+    const candResults = await Promise.all(ids.map(cid => ds.getCandidate(cid)));
+    const loadedCands = candResults.filter(cr => cr.ok).map(cr => (cr as { ok: true; data: CandidateClause }).data);
+    setCandidates(loadedCands);
 
-    // Load overlaps only for PROPOSED status (before review runs)
+    // For REVISE candidates, load the old canonical clause for side-by-side comparison
+    const prevMap = new Map<number, Clause>();
+    await Promise.all(
+      loadedCands
+        .filter(c => c.has_previous && c.previous_record_id > 0)
+        .map(async c => {
+          const cr = await ds.getClause(c.previous_record_id);
+          if (cr.ok) prevMap.set(c.previous_record_id, cr.data);
+        })
+    );
+    setPreviousClauses(prevMap);
+
+    // Load overlaps only when PROPOSED (before review runs)
     if (r.data.status_name === "PROPOSED") {
       const overlapResults = await Promise.all(
         ids.map((_, i) => ds.previewOverlaps(proposalId, i, 5))
@@ -120,18 +134,18 @@ export default function DiffPage({ params }: { params: Promise<{ id: string }> }
   return (
     <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "1.5rem 1.25rem" }}>
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "1.25rem" }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "1.25rem", flexWrap: "wrap", gap: "0.75rem" }}>
         <div>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.25rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.25rem", flexWrap: "wrap" }}>
             <Link href="/" style={{ fontSize: "12px", color: "var(--cobalt)", textDecoration: "none" }}>← Standard</Link>
             <span style={{ color: "var(--ink-faint)" }}>/</span>
             <h1 style={{ fontWeight: 700, fontSize: "16px", margin: 0 }}>Release Proposal #{proposal.proposal_id}</h1>
             <StatusBadge status={proposal.status_name} />
           </div>
-          <div style={{ display: "flex", gap: "1rem", fontSize: "12px", color: "var(--ink-muted)" }}>
+          <div style={{ display: "flex", gap: "1rem", fontSize: "12px", color: "var(--ink-muted)", flexWrap: "wrap" }}>
             <span>Base: <span className="version-plate">v{proposal.base_version}</span></span>
             <span className="font-mono-spec" style={{ fontSize: "11px" }}>{proposal.commit_sha.slice(0, 10)}…</span>
-            <span>{proposal.changed_clause_count} changed clause{proposal.changed_clause_count !== 1 ? "s" : ""}</span>
+            <span>{proposal.candidate_count} candidate{proposal.candidate_count !== 1 ? "s" : ""}</span>
           </div>
         </div>
         <div style={{ display: "flex", gap: "0.5rem", flexDirection: "column", alignItems: "flex-end" }}>
@@ -167,7 +181,7 @@ export default function DiffPage({ params }: { params: Promise<{ id: string }> }
       )}
 
       {/* Actions */}
-      <div style={{ marginBottom: "1.5rem", display: "flex", gap: "0.75rem", alignItems: "center" }}>
+      <div style={{ marginBottom: "1.5rem", display: "flex", gap: "0.75rem", alignItems: "center", flexWrap: "wrap" }}>
         {canReview && (
           <NetworkGate>
             <button
@@ -196,25 +210,26 @@ export default function DiffPage({ params }: { params: Promise<{ id: string }> }
         )}
       </div>
 
-      {/* Semantic diff view: Changed clauses with redline overlays */}
+      {/* Semantic diff view */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: "1.5rem" }}>
-        {/* Center: Document redline */}
+        {/* Center: Candidate clauses (proposed text) */}
         <div>
-          <h2 style={{ fontWeight: 600, fontSize: "13px", marginBottom: "0.75rem" }}>Changed Clauses</h2>
-          {changedClauses.map((cl, i) => {
-            const dec = decisions.find(d => d.record_id === cl.record_id);
-            const overlap = overlaps.find(o => o.changed_clause_record_id === cl.record_id);
+          <h2 style={{ fontWeight: 600, fontSize: "13px", marginBottom: "0.75rem" }}>Proposed Changes ({candidates.length})</h2>
+          {candidates.map((cand) => {
+            const dec = decisions.find(d => d.candidate_record_id === cand.candidate_record_id);
+            const prev = cand.has_previous ? previousClauses.get(cand.previous_record_id) : undefined;
+            const overlap = overlaps.find(o => o.candidate_clause_id === cand.clause_id);
             return (
-              <ChangedClausePanel key={cl.record_id} clause={cl} decision={dec} overlapCount={overlap?.overlaps.length ?? 0} />
+              <CandidatePanel key={cand.candidate_record_id} candidate={cand} decision={dec} previousClause={prev} overlapCount={overlap?.overlaps.length ?? 0} />
             );
           })}
         </div>
 
-        {/* Right: Semantic overlaps / callouts */}
+        {/* Right: Semantic overlaps */}
         <div>
           <h2 style={{ fontWeight: 600, fontSize: "13px", marginBottom: "0.75rem" }}>Semantic Overlaps</h2>
           <p style={{ fontSize: "11px", color: "var(--ink-faint)", marginBottom: "0.75rem" }}>
-            Retrieved from VecDB. Raw distances shown — these are context, not verdicts.
+            VecDB distance on candidate text. Context for validators, not verdicts.
           </p>
           {overlaps.length === 0 && (
             <div style={{ fontSize: "12px", color: "var(--ink-faint)" }}>
@@ -224,9 +239,10 @@ export default function DiffPage({ params }: { params: Promise<{ id: string }> }
             </div>
           )}
           {overlaps.map((o) => (
-            <div key={o.changed_clause_id} style={{ marginBottom: "1rem" }}>
+            <div key={o.candidate_clause_id} style={{ marginBottom: "1rem" }}>
               <div style={{ fontSize: "11px", fontWeight: 600, marginBottom: "0.4rem" }}>
-                Overlaps for §{o.changed_clause_id}
+                Overlaps for §{o.candidate_clause_id}
+                <span style={{ fontWeight: 400, color: "var(--ink-faint)", marginLeft: "0.4rem" }}>({o.operation})</span>
               </div>
               {o.overlaps.length === 0 ? (
                 <div style={{ fontSize: "11px", color: "var(--ink-faint)" }}>No eligible semantic memory found.</div>
@@ -257,22 +273,30 @@ export default function DiffPage({ params }: { params: Promise<{ id: string }> }
   );
 }
 
-function ChangedClausePanel({
-  clause,
+const NORMATIVE_NAMES: Record<number, string> = { 0: "MUST", 1: "SHOULD", 2: "MAY" };
+const OP_LABELS: Record<string, string> = { ADD: "NEW", REVISE: "REVISED", SUPERSEDE: "SUPERSEDES" };
+
+function CandidatePanel({
+  candidate,
   decision,
+  previousClause,
   overlapCount,
 }: {
-  clause: Clause;
+  candidate: CandidateClause;
   decision?: ParsedClauseDecision;
+  previousClause?: Clause;
   overlapCount: number;
 }) {
   const hasConflict = decision?.decision === "SEMANTIC_CONFLICT";
   const isSupersession = decision?.decision === "COHERENT_SUPERSESSION";
+  const opLabel = OP_LABELS[candidate.operation] ?? candidate.operation;
+  const opColor = candidate.operation === "ADD" ? "var(--status-canonical)" :
+                  candidate.operation === "REVISE" ? "var(--cobalt)" : "var(--marker-dark)";
 
   return (
     <div
       style={{
-        marginBottom: "1.25rem",
+        marginBottom: "1.5rem",
         borderBottom: "1px solid var(--border)",
         paddingBottom: "1.25rem",
       }}
@@ -281,21 +305,39 @@ function ChangedClausePanel({
         className={hasConflict ? "redline-marker" : isSupersession ? "change-marker" : ""}
         style={{ paddingLeft: hasConflict || isSupersession ? "0.75rem" : 0 }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
-          <span className="font-mono-spec" style={{ fontSize: "13px", fontWeight: 700 }}>§{clause.clause_id}</span>
-          <NormativeBadge level={clause.normative_level} name={clause.normative_name} />
-          <span style={{ fontSize: "11px", color: "var(--ink-faint)" }}>{clause.section_path}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem", flexWrap: "wrap" }}>
+          <span className="font-mono-spec" style={{ fontSize: "13px", fontWeight: 700 }}>§{candidate.clause_id}</span>
+          <span style={{ fontSize: "10px", fontWeight: 700, color: opColor, background: "var(--surface)", padding: "1px 5px", borderRadius: "2px", border: `1px solid ${opColor}` }}>
+            {opLabel}
+          </span>
+          <NormativeBadge level={candidate.normative_level} name={NORMATIVE_NAMES[candidate.normative_level] ?? "MUST"} />
+          <span style={{ fontSize: "11px", color: "var(--ink-faint)" }}>{candidate.section_path}</span>
           {decision && <DecisionBadge decision={decision.decision} />}
           {overlapCount > 0 && !decision && (
             <span style={{ fontSize: "10px", color: "var(--cobalt)", background: "var(--cobalt-bg)", padding: "1px 5px", borderRadius: "2px" }}>
-              {overlapCount} semantic overlap{overlapCount !== 1 ? "s" : ""}
+              {overlapCount} overlap{overlapCount !== 1 ? "s" : ""}
             </span>
           )}
         </div>
 
-        <p className="font-prose" style={{ margin: "0 0 0.5rem", fontSize: "14px", lineHeight: 1.7 }}>
-          {clause.text}
-        </p>
+        {/* Show old text for REVISE operations */}
+        {candidate.operation === "REVISE" && previousClause && (
+          <div style={{ marginBottom: "0.75rem" }}>
+            <div style={{ fontSize: "10px", color: "var(--ink-faint)", marginBottom: "0.2rem", fontWeight: 600 }}>CURRENT CANONICAL TEXT</div>
+            <p className="font-prose" style={{ margin: 0, fontSize: "13px", lineHeight: 1.65, color: "var(--ink-faint)", textDecoration: "line-through" }}>
+              {previousClause.text}
+            </p>
+          </div>
+        )}
+
+        <div style={{ marginBottom: "0.5rem" }}>
+          {candidate.operation === "REVISE" && previousClause && (
+            <div style={{ fontSize: "10px", color: "var(--status-canonical)", marginBottom: "0.2rem", fontWeight: 600 }}>PROPOSED REPLACEMENT TEXT</div>
+          )}
+          <p className="font-prose" style={{ margin: 0, fontSize: "14px", lineHeight: 1.7 }}>
+            {candidate.text}
+          </p>
+        </div>
 
         {decision?.reason && (
           <div style={{ fontSize: "12px", color: hasConflict ? "var(--redline)" : "var(--ink-muted)", borderTop: "1px solid var(--border)", paddingTop: "0.4rem", marginTop: "0.4rem" }}>
@@ -316,14 +358,14 @@ function ChangedClausePanel({
 
       <div style={{ marginTop: "0.5rem" }}>
         <a
-          href={clause.source_url}
+          href={candidate.source_url}
           target="_blank"
           rel="noopener noreferrer"
           style={{ fontSize: "11px", color: "var(--cobalt)", textDecoration: "none" }}
         >
           Source →
         </a>
-        <span style={{ fontSize: "10px", color: "var(--ink-faint)", marginLeft: "0.5rem" }}>{clause.source_digest}</span>
+        <span style={{ fontSize: "10px", color: "var(--ink-faint)", marginLeft: "0.5rem" }}>{candidate.source_digest}</span>
       </div>
     </div>
   );

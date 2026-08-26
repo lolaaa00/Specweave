@@ -5,7 +5,7 @@ import { createReadClient, createWriteClient, getChainId } from "./client";
 import { parseExecution } from "./execution";
 import type {
   Standard, Clause, ClauseListItem, ReleaseProposal, ReleaseListItem,
-  PreviewOverlaps, SupersessionGraph,
+  PreviewOverlaps, SupersessionGraph, CandidateClause,
 } from "./schema";
 
 const POLL_INTERVAL_MS = 5000;
@@ -193,8 +193,14 @@ export async function listProposalsForStandard(standardId: number, offset: numbe
 export async function getSupersessionGraph(standardId: number): Promise<SupersessionGraph> {
   return callView<SupersessionGraph>("get_supersession_graph", [standardId]);
 }
-export async function previewOverlaps(proposalId: number, changedClauseIndex: number, k: number): Promise<PreviewOverlaps> {
-  return callView<PreviewOverlaps>("preview_overlaps", [proposalId, changedClauseIndex, k]);
+export async function getCandidate(candidateRecordId: number): Promise<CandidateClause> {
+  return callView<CandidateClause>("get_candidate", [candidateRecordId]);
+}
+export async function getCandidateCount(): Promise<number> {
+  return Number(await callView<string | number>("get_candidate_count"));
+}
+export async function previewOverlaps(proposalId: number, candidateIndex: number, k: number): Promise<PreviewOverlaps> {
+  return callView<PreviewOverlaps>("preview_overlaps", [proposalId, candidateIndex, k]);
 }
 export async function isEditor(standardId: number, address: string): Promise<boolean> {
   return callView<boolean>("is_editor", [standardId, address]);
@@ -232,15 +238,26 @@ export async function registerInitialClause(
     [standardId, clauseId, sectionPath, normativeLevel, text, sourceUrl, sourceDigest], onProgress);
 }
 
+export interface CandidateInput {
+  operation: "ADD" | "REVISE" | "SUPERSEDE";
+  clause_id: string;
+  previous_record_id: number;
+  section_path: string;
+  normative_level: number;
+  text: string;
+  source_url: string;
+  source_digest: string;
+}
+
 export async function proposeRelease(
   account: string, mode: WalletMode,
   standardId: number, baseVersion: number, commitSha: string,
   manifestUrl: string, manifestDigest: string,
-  changedClauseCount: number, changedClauseIds: number[],
+  candidates: CandidateInput[],
   onProgress?: WriteProgressCallback,
 ): Promise<WriteResult> {
   return sendWrite(account, mode, "propose_release",
-    [standardId, baseVersion, commitSha, manifestUrl, manifestDigest, changedClauseCount, changedClauseIds],
+    [standardId, baseVersion, commitSha, manifestUrl, manifestDigest, candidates],
     onProgress);
 }
 

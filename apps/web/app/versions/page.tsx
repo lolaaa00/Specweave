@@ -26,8 +26,8 @@ export default function VersionLedger() {
   }, []);
 
   const canonical = proposals.filter(p => p.status_name === "CANONICAL");
-  const inProgress = proposals.filter(p => !["CANONICAL", "REJECTED", "CANCELLED"].includes(p.status_name));
-  const closed = proposals.filter(p => ["REJECTED", "CANCELLED"].includes(p.status_name));
+  const inProgress = proposals.filter(p => !["CANONICAL", "CANCELLED"].includes(p.status_name));
+  const closed = proposals.filter(p => ["CANCELLED"].includes(p.status_name));
 
   return (
     <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "1.5rem 1.25rem" }}>
@@ -79,7 +79,7 @@ export default function VersionLedger() {
                       </td>
                       <td><span className="font-mono-spec" style={{ fontSize: "11px" }}>{p.commit_sha.slice(0, 12)}…</span></td>
                       <td><span className="digest" style={{ fontSize: "10px" }}>—</span></td>
-                      <td style={{ fontSize: "12px" }}>{p.changed_clause_count}</td>
+                      <td style={{ fontSize: "12px" }}>{p.candidate_count}</td>
                       <td style={{ fontSize: "11px", color: "var(--ink-faint)" }}>
                         {p.proposed_at ? new Date(p.proposed_at * 1000).toLocaleDateString() : "—"}
                       </td>
@@ -114,7 +114,7 @@ export default function VersionLedger() {
                       </td>
                       <td><span className="version-plate">v{p.base_version}</span></td>
                       <td><StatusBadge status={p.status_name} /></td>
-                      <td style={{ fontSize: "12px" }}>{p.changed_clause_count}</td>
+                      <td style={{ fontSize: "12px" }}>{p.candidate_count}</td>
                       <td style={{ fontSize: "11px", color: "var(--ink-faint)" }}>
                         {p.proposed_at ? new Date(p.proposed_at * 1000).toLocaleDateString() : "—"}
                       </td>

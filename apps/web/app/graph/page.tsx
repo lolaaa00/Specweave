@@ -150,9 +150,9 @@ function GraphView({
           <span className="spec-label">Supersession edges</span>
           {graph.edges.map((e, i) => (
             <div key={i} style={{ fontSize: "12px", marginTop: "0.4rem", display: "flex", gap: "0.5rem", alignItems: "center" }}>
-              <span className="font-mono-spec" style={{ fontSize: "11px" }}>§{e.from_clause_id}</span>
+              <span className="font-mono-spec" style={{ fontSize: "11px" }}>§{e.old_clause_id}</span>
               <span style={{ color: "var(--redline)" }}>→ superseded at</span>
-              <span className="version-plate">v{e.superseded_at_version}</span>
+              <span className="version-plate">v{e.at_version}</span>
             </div>
           ))}
         </div>

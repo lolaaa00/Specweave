@@ -8,7 +8,7 @@ import { IS_LIVE, CONTRACT_ADDRESS } from "./config";
 import * as contract from "./contract";
 import type {
   Standard, Clause, ClauseListItem, ReleaseProposal, ReleaseListItem,
-  PreviewOverlaps, SupersessionGraph,
+  PreviewOverlaps, SupersessionGraph, CandidateClause,
 } from "./schema";
 
 export type DataResult<T> =
@@ -41,6 +41,7 @@ async function wrap<T>(fn: () => Promise<T>): Promise<DataResult<T>> {
 export const ds = {
   getStandard: (id: number) => wrap(() => contract.getStandard(id)),
   getClause: (id: number) => wrap(() => contract.getClause(id)),
+  getCandidate: (id: number) => wrap(() => contract.getCandidate(id)),
   getRelease: (id: number) => wrap(() => contract.getRelease(id)),
   getStandardCount: () => wrap(() => contract.getStandardCount()),
   getClauseCount: () => wrap(() => contract.getClauseCount()),

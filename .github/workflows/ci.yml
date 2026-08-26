@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # -------------------------------------------------------------------------
+  # Contract: Python tests
+  # -------------------------------------------------------------------------
+  contract-tests:
+    name: Contract tests (pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test dependencies
+        run: pip install pytest numpy
+
+      - name: Run contract tests
+        run: pytest tests/direct/test_specweave.py -v --tb=short
+
+  # -------------------------------------------------------------------------
+  # Frontend: typecheck, lint, build
+  # -------------------------------------------------------------------------
+  frontend:
+    name: Frontend (typecheck + lint + build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+        env:
+          NEXT_PUBLIC_SPECWEAVE_CONTRACT: ""
+
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SPECWEAVE_CONTRACT: ""
+          NEXT_PUBLIC_CHAIN_ID: "61999"
+          NEXT_PUBLIC_RPC_URL: "https://studio.genlayer.com/api"
