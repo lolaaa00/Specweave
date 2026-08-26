@@ -67,14 +67,21 @@ export function AppHeader() {
     <header className="app-header">
       <div style={{ display: "flex", alignItems: "center", padding: "0 1.25rem", height: "2.75rem", gap: "1.5rem" }}>
         {/* Logo */}
-        <div style={{ display: "flex", alignItems: "baseline", gap: "0.4rem", flexShrink: 0 }}>
-          <span style={{ fontWeight: 700, fontSize: "14px", letterSpacing: "-0.01em" }}>SpecWeave</span>
-          <span className="provenance-tag" style={{ fontSize: "10px" }}>
-            {IS_LIVE && CONTRACT_ADDRESS
-              ? "live · studionet"
-              : IS_LIVE && !CONTRACT_ADDRESS
-              ? "live · no contract"
-              : "not live"}
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexShrink: 0 }}>
+          <span style={{ fontWeight: 700, fontSize: "15px", letterSpacing: "-0.025em" }}>SpecWeave</span>
+          <span
+            className="provenance-tag"
+            style={{
+              fontSize: "9px",
+              padding: "1px 6px",
+              borderRadius: "3px",
+              background: IS_LIVE && CONTRACT_ADDRESS ? "rgba(13,77,26,0.1)" : "var(--surface)",
+              color: IS_LIVE && CONTRACT_ADDRESS ? "var(--status-canonical)" : "var(--ink-faint)",
+              border: `1px solid ${IS_LIVE && CONTRACT_ADDRESS ? "rgba(13,77,26,0.2)" : "var(--border)"}`,
+              fontWeight: 600,
+            }}
+          >
+            {IS_LIVE && CONTRACT_ADDRESS ? "live" : IS_LIVE ? "no contract" : "dev"}
           </span>
         </div>
 

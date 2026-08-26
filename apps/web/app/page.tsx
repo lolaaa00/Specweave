@@ -141,7 +141,7 @@ function DocumentView({ standard, clauses }: { standard: Standard; clauses: Clau
 function ClauseRow({ clause, superseded = false }: { clause: ClauseListItem; superseded?: boolean }) {
   return (
     <div
-      className={superseded ? "" : ""}
+      className={`stagger-item${superseded ? "" : " clause-row"}`}
       style={{
         display: "grid",
         gridTemplateColumns: "3rem 1fr",
@@ -204,55 +204,83 @@ function ClauseRow({ clause, superseded = false }: { clause: ClauseListItem; sup
 function ProductHero({ compact = false }: { compact?: boolean }) {
   if (compact) {
     return (
-      <div style={{ marginBottom: "1.5rem", padding: "0.75rem 1rem", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "2px" }}>
-        <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap", fontSize: "12px", color: "var(--ink-muted)" }}>
-          <span>
-            <strong style={{ color: "var(--ink)", fontWeight: 600 }}>SpecWeave</strong>
-            {" "}— a semantic release gate for open standards documents, running on GenLayer.
-          </span>
-          <span>Consensus via <span className="font-mono-spec" style={{ fontSize: "11px" }}>gl.eq_principle.prompt_comparative</span> — validators independently review each clause change.</span>
-          <span>No single party controls the gate — not even the steward.</span>
+      <div style={{
+        marginBottom: "1.75rem",
+        padding: "1rem 1.25rem",
+        background: "var(--paper-raised)",
+        border: "1px solid var(--border)",
+        borderRadius: "8px",
+        boxShadow: "var(--shadow-sm)",
+        animation: "fadeIn 0.4s ease-out both",
+      }}>
+        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginBottom: "0.5rem" }}>
+          <span style={{ fontWeight: 700, fontSize: "13px" }}>SpecWeave</span>
+          <span className="provenance-tag" style={{ fontSize: "10px" }}>· studionet · 0xC5d2…b52A</span>
         </div>
+        <p style={{ margin: 0, fontSize: "12px", color: "var(--ink-muted)", lineHeight: 1.6 }}>
+          Semantic release gate for open standards — GenLayer validators independently review each changed clause via{" "}
+          <span className="font-mono-spec" style={{ fontSize: "10px" }}>gl.eq_principle.prompt_comparative</span>.
+          No single party controls the gate.
+        </p>
       </div>
     );
   }
 
   return (
-    <div style={{ marginBottom: "2rem" }}>
-      <div style={{ marginBottom: "1rem" }}>
-        <h1 style={{ fontWeight: 700, fontSize: "22px", margin: "0 0 0.25rem" }}>SpecWeave</h1>
-        <p style={{ margin: 0, fontSize: "14px", color: "var(--ink-muted)", lineHeight: 1.6 }}>
-          A semantic release gate for open standards documents — running on GenLayer.
+    <div style={{ marginBottom: "2.5rem", animation: "fadeUp 0.4s ease-out both" }}>
+      {/* Hero */}
+      <div style={{ marginBottom: "1.75rem" }}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: "0.75rem", marginBottom: "0.5rem" }}>
+          <h1 style={{ fontWeight: 700, fontSize: "28px", letterSpacing: "-0.02em" }}>SpecWeave</h1>
+          <span className="provenance-tag">on GenLayer</span>
+        </div>
+        <p style={{ margin: 0, fontSize: "15px", color: "var(--ink-muted)", lineHeight: 1.65, maxWidth: "600px" }}>
+          A tamper-resistant semantic gate between a proposed commit and a published standard version.
+          No version bump without validator consensus.
         </p>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "0.75rem", marginBottom: "1.25rem" }}>
+
+      {/* Three pillars */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "0.75rem", marginBottom: "1.5rem" }}>
         {[
           {
             title: "What it does",
-            body: "When a standards editor proposes a release, SpecWeave's Intelligent Contract asks GenLayer validators to independently review each changed clause for coherence, conflicts, and supersessions — before any version bump is allowed.",
+            body: "SpecWeave's Intelligent Contract asks GenLayer validators to independently review each changed clause for coherence, conflicts, and supersessions — before any version bump is allowed.",
           },
           {
             title: "Who it's for",
-            body: "Standards bodies and open-source specification projects that need an auditable, tamper-resistant semantic review step between a proposed commit and a published release.",
+            body: "Standards bodies and open-source specification projects that need an auditable, cryptographically anchored semantic review step between a proposed commit and a published release.",
           },
           {
-            title: "Why consensus matters",
-            body: "A single reviewer can make mistakes or act in bad faith. GenLayer runs the same AI review across multiple independent validators and requires them to agree on the outcome — meaning the contract can't be gamed by the leader alone.",
+            title: "Why consensus",
+            body: "One reviewer can be wrong or dishonest. GenLayer runs the same AI review across N validators using gl.eq_principle.prompt_comparative — a malicious leader simply fails consensus.",
           },
-        ].map(({ title, body }) => (
+        ].map(({ title, body }, i) => (
           <div
             key={title}
-            style={{ padding: "0.75rem 1rem", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "2px" }}
+            className="stagger-item"
+            style={{
+              padding: "1rem 1.1rem",
+              background: "var(--paper-raised)",
+              border: "1px solid var(--border)",
+              borderRadius: "8px",
+              boxShadow: "var(--shadow-sm)",
+              animationDelay: `${i * 0.08}s`,
+            }}
           >
-            <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--cobalt)", marginBottom: "0.4rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>{title}</div>
-            <p style={{ margin: 0, fontSize: "12px", color: "var(--ink-muted)", lineHeight: 1.6 }}>{body}</p>
+            <div style={{ fontSize: "10px", fontWeight: 700, color: "var(--cobalt)", marginBottom: "0.5rem", textTransform: "uppercase", letterSpacing: "0.07em" }}>{title}</div>
+            <p style={{ margin: 0, fontSize: "12px", color: "var(--ink-muted)", lineHeight: 1.65 }}>{body}</p>
           </div>
         ))}
       </div>
-      <div style={{ fontSize: "11px", color: "var(--ink-faint)", borderTop: "1px solid var(--border)", paddingTop: "0.6rem" }}>
-        Contract on StudioNet (chain 61999) · consensus via{" "}
-        <span className="font-mono-spec" style={{ fontSize: "10px" }}>gl.eq_principle.prompt_comparative</span>
-        {" "}· 43 contract tests · source on GitHub
+      <div style={{ display: "flex", gap: "1rem", fontSize: "11px", color: "var(--ink-faint)", borderTop: "1px solid var(--border)", paddingTop: "0.65rem", flexWrap: "wrap" }}>
+        <span className="font-mono-spec" style={{ fontSize: "10px" }}>chain:61999</span>
+        <span>·</span>
+        <span className="font-mono-spec" style={{ fontSize: "10px" }}>0xC5d2…b52A</span>
+        <span>·</span>
+        <span>43 contract tests</span>
+        <span>·</span>
+        <span>gl.eq_principle.prompt_comparative</span>
       </div>
     </div>
   );
@@ -260,8 +288,19 @@ function ProductHero({ compact = false }: { compact?: boolean }) {
 
 function LoadingState() {
   return (
-    <div style={{ padding: "3rem 0" }}>
-      <p style={{ color: "var(--ink-faint)", fontSize: "13px" }}>Loading standard from chain…</p>
+    <div style={{ paddingTop: "0.5rem" }}>
+      <div className="skeleton" style={{ height: "28px", width: "180px", marginBottom: "0.75rem" }} />
+      <div className="skeleton" style={{ height: "14px", width: "320px", marginBottom: "0.4rem" }} />
+      <div className="skeleton" style={{ height: "14px", width: "240px", marginBottom: "1.5rem" }} />
+      {[1, 2, 3, 4, 5].map(i => (
+        <div key={i} style={{ display: "flex", gap: "1rem", borderBottom: "1px solid var(--border)", padding: "0.75rem 0", alignItems: "flex-start" }}>
+          <div className="skeleton" style={{ height: "12px", width: "2rem", flexShrink: 0 }} />
+          <div style={{ flex: 1 }}>
+            <div className="skeleton" style={{ height: "12px", width: "60%", marginBottom: "0.35rem" }} />
+            <div className="skeleton" style={{ height: "12px", width: "90%" }} />
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
