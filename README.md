@@ -75,7 +75,7 @@ The generated wallet is honest about its limits: the UI warns on creation, requi
 |---|---|
 | **Network** | StudioNet (chain 61999) |
 | **RPC** | `https://studio.genlayer.com/api` |
-| **Contract** | `0x1355c428518feAc0FC387609c691Cc171563823c` |
+| **Contract** | `0x1A7Ed64C3ac98B11f67da238B882611E7AAAa202` |
 | **Frontend** | https://specweave.vercel.app |
 
 ---
@@ -108,7 +108,7 @@ Contract tests use a local `_GL` stub — no network required. The stub implemen
 cd apps/web && npm install
 
 # Set contract address (already in .env.local)
-# NEXT_PUBLIC_SPECWEAVE_CONTRACT=0x1355c428518feAc0FC387609c691Cc171563823c
+# NEXT_PUBLIC_SPECWEAVE_CONTRACT=0x1A7Ed64C3ac98B11f67da238B882611E7AAAa202
 
 # Start dev server
 npm run dev
