@@ -564,7 +564,9 @@ class SpecWeave(gl.Contract):
                 f"EXPECTED: base_version {base_version} does not match canonical {std.canonical_version}"
             )
         self._require_commit_sha(commit_sha)
-        self._require_commit_pinned_url(manifest_url, commit_sha, "manifest")
+        # Manifest integrity is protected by manifest_digest (SHA-256 verified on fetch).
+        # Commit-pinning is not required on the manifest URL itself — only on source artifacts.
+        self._require_https_url(manifest_url, "manifest")
         self._require_sha256_digest(manifest_digest, "manifest")
 
         if not isinstance(candidates, list):
