@@ -4,7 +4,7 @@
     "id": 0,
     "name": "SpecWeave Governance Standard"
   },
-  "commit_sha": "9e62dcaba622e8c0bb641bb415379490876c5f71",
+  "commit_sha": "6532de9ee24ce389a790b22e821e3c77d18d0488",
   "base_version": 0,
   "target_version": 1,
   "changes": [
@@ -14,7 +14,7 @@
       "section_path": "1.1",
       "normative_level": 0,
       "text": "Every release of a standard governed by SpecWeave MUST be accompanied by a canonical manifest that records the exact set of normative changes, the commit SHA at which those changes were authored, and a cryptographic digest of each source artifact. The manifest itself MUST be published at an immutable, commit-pinned URL before the release proposal is submitted for review.",
-      "source_url": "https://raw.githubusercontent.com/lolaaa00/Specweave/9e62dcaba622e8c0bb641bb415379490876c5f71/demo/standard/clauses/clause-1-1-v1.md",
+      "source_url": "https://raw.githubusercontent.com/lolaaa00/Specweave/6532de9ee24ce389a790b22e821e3c77d18d0488/demo/standard/clauses/clause-1-1-v1.md",
       "source_digest": "sha256:15dc46fefc59630f2069db998af2bbc60488267301e4b67ab3bf85f2c288579a"
     },
     {
@@ -23,7 +23,7 @@
       "section_path": "1.2",
       "normative_level": 0,
       "text": "A release proposal MUST NOT be finalized unless every candidate clause change receives a COHERENT_NEW or COHERENT_SUPERSESSION decision from the GenLayer validator consensus. Proposals containing DUPLICATE_RULE, SEMANTIC_CONFLICT, or INSUFFICIENT_CONTEXT decisions MUST be returned with REVISION_REQUIRED status. The proposer MUST then submit a corrected proposal; an existing proposal with REVISION_REQUIRED status is terminal and cannot be resubmitted for review.",
-      "source_url": "https://raw.githubusercontent.com/lolaaa00/Specweave/9e62dcaba622e8c0bb641bb415379490876c5f71/demo/standard/clauses/clause-1-2-v1.md",
+      "source_url": "https://raw.githubusercontent.com/lolaaa00/Specweave/6532de9ee24ce389a790b22e821e3c77d18d0488/demo/standard/clauses/clause-1-2-v1.md",
       "source_digest": "sha256:105ab8a5783315b3da999fc3788b2fa41112a7ae0e4713a9634eece9f87e91d0"
     }
   ]
