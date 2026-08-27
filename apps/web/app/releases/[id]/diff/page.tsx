@@ -127,9 +127,9 @@ export default function DiffPage({ params }: { params: Promise<{ id: string }> }
   if (!proposal) return null;
 
   const decisions = parseClauseDecisions(proposal.clause_decisions_json);
-  const canReview = ["PROPOSED", "REVISION_REQUIRED"].includes(proposal.status_name);
+  const canReview = proposal.status_name === "PROPOSED";
   const canFinalize = proposal.status_name === "ACCEPTABLE";
-  const canCancel = ["PROPOSED", "UNDER_REVIEW", "ACCEPTABLE", "REVISION_REQUIRED"].includes(proposal.status_name);
+  const canCancel = ["PROPOSED", "ACCEPTABLE"].includes(proposal.status_name);
 
   return (
     <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "1.5rem 1.25rem" }}>

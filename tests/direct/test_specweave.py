@@ -31,7 +31,7 @@ genlayer_stub.DynArray = list
 
 
 class _Message:
-    sender_address = "0xSteward1234567890abcdef1234567890abcdef12"
+    sender_address = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 
 
 class _GL:
@@ -133,9 +133,9 @@ from contracts.specweave import (
 # Test constants
 # ---------------------------------------------------------------------------
 
-STEWARD = "0xSteward1234567890abcdef1234567890abcdef12"
-EDITOR  = "0xEditor1234567890abcdef1234567890abcdef1234"
-OTHER   = "0xOther01234567890abcdef1234567890abcdef1234"
+STEWARD = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+EDITOR  = "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+OTHER   = "0xcccccccccccccccccccccccccccccccccccccccc"
 
 COMMIT_A = "a" * 40
 COMMIT_B = "b" * 40
@@ -270,6 +270,8 @@ def force_acceptable(c, pid, cand_id, clause_id, decision=None, supersedes=None)
         rationale="Test setup.",
         proposed_at=p.proposed_at, reviewed_at=0,
         candidate_ids_json=p.candidate_ids_json,
+        verified_manifest_digest=p.manifest_digest,
+        evidence_verified=True,
     )
 
 
@@ -535,35 +537,44 @@ class TestCommitShaValidation:
 # ---------------------------------------------------------------------------
 
 class TestUrlValidation:
-    def test_manifest_url_must_be_raw_githubusercontent(self):
+    def test_manifest_url_must_be_https(self):
+        """Manifest URL only requires HTTPS — integrity is enforced by digest, not URL pinning."""
         c = make_contract()
         sid = create_standard(c)
         _GL.message.sender_address = STEWARD
         cand = make_add_candidate("2-1", COMMIT_A)
-        with pytest.raises(_GL.vm.UserError, match="raw.githubusercontent.com"):
+        with pytest.raises(_GL.vm.UserError, match="HTTPS"):
             c.propose_release(
                 sid, 0, COMMIT_A,
-                "https://github.com/org/spec/blob/aaaa/m.json",  # wrong host
+                "http://example.com/manifest.json",  # HTTP rejected
                 MANIFEST_DIGEST, [cand],
             )
 
-    def test_manifest_url_sha_must_match_commit_sha(self):
+    def test_manifest_url_any_https_host_accepted(self):
+        """Any HTTPS host is accepted for manifest — not restricted to raw.githubusercontent.com."""
         c = make_contract()
         sid = create_standard(c)
         _GL.message.sender_address = STEWARD
         cand = make_add_candidate("2-1", COMMIT_A)
-        wrong_sha_url = f"https://raw.githubusercontent.com/org/spec/{COMMIT_B}/m.json"
-        with pytest.raises(_GL.vm.UserError, match="does not match"):
-            c.propose_release(sid, 0, COMMIT_A, wrong_sha_url, MANIFEST_DIGEST, [cand])
+        # Should NOT raise — any HTTPS host is fine for the manifest
+        c.propose_release(
+            sid, 0, COMMIT_A,
+            "https://example.com/manifest.json",
+            MANIFEST_DIGEST, [cand],
+        )
 
-    def test_manifest_url_mutable_branch_rejected(self):
+    def test_manifest_url_mutable_branch_is_allowed(self):
+        """Manifest URL is HTTPS-only; mutable branch refs are permitted — digest provides integrity."""
         c = make_contract()
         sid = create_standard(c)
         _GL.message.sender_address = STEWARD
         cand = make_add_candidate("2-1", COMMIT_A)
-        mutable_url = "https://raw.githubusercontent.com/org/spec/main/m.json"
-        with pytest.raises(_GL.vm.UserError, match="mutable branch"):
-            c.propose_release(sid, 0, COMMIT_A, mutable_url, MANIFEST_DIGEST, [cand])
+        # Should NOT raise — manifest URL is HTTPS-only validated
+        c.propose_release(
+            sid, 0, COMMIT_A,
+            "https://raw.githubusercontent.com/org/spec/main/m.json",
+            MANIFEST_DIGEST, [cand],
+        )
 
     def test_source_url_must_contain_same_commit_sha(self):
         c = make_contract()
@@ -605,7 +616,7 @@ class TestCandidateValidation:
         register_clause(c, sid, "1-1")
         _GL.message.sender_address = STEWARD
         cand = make_add_candidate("1-1")  # already exists
-        with pytest.raises(_GL.vm.UserError, match="already exists as active"):
+        with pytest.raises(_GL.vm.UserError, match="already active"):
             c.propose_release(sid, 0, COMMIT_A, MANIFEST_URL_A, MANIFEST_DIGEST, [cand])
 
     def test_revise_existing_clause_accepted(self):
@@ -631,7 +642,7 @@ class TestCandidateValidation:
         sid = create_standard(c)
         _GL.message.sender_address = STEWARD
         cand = make_revise_candidate("9-9", 0)
-        with pytest.raises(_GL.vm.UserError, match="not found in canonical"):
+        with pytest.raises(_GL.vm.UserError, match="not in canonical"):
             c.propose_release(sid, 0, COMMIT_A, MANIFEST_URL_A, MANIFEST_DIGEST, [cand])
 
     def test_duplicate_clause_id_in_candidates_rejected(self):
@@ -724,7 +735,29 @@ class TestCancelRelease:
         force_acceptable(c, pid, cand_id, "2-1")
         c.finalize_release(pid)
         _GL.message.sender_address = STEWARD
-        with pytest.raises(_GL.vm.UserError, match="cannot cancel"):
+        with pytest.raises(_GL.vm.UserError, match="only PROPOSED or ACCEPTABLE"):
+            c.cancel_release(pid)
+
+    def test_cannot_cancel_under_review(self):
+        """UNDER_REVIEW proposals cannot be cancelled — contract rejects."""
+        c = make_contract()
+        sid = create_standard(c)
+        register_clause(c, sid, "1-1")
+        pid = propose_with_add(c, sid, "2-1")
+        c.proposals[pid].status = STATUS_UNDER_REVIEW
+        _GL.message.sender_address = STEWARD
+        with pytest.raises(_GL.vm.UserError, match="only PROPOSED or ACCEPTABLE"):
+            c.cancel_release(pid)
+
+    def test_cannot_cancel_revision_required(self):
+        """REVISION_REQUIRED is terminal — cancel is also rejected."""
+        c = make_contract()
+        sid = create_standard(c)
+        register_clause(c, sid, "1-1")
+        pid = propose_with_add(c, sid, "2-1")
+        c.proposals[pid].status = STATUS_REVISION_REQUIRED
+        _GL.message.sender_address = STEWARD
+        with pytest.raises(_GL.vm.UserError, match="only PROPOSED or ACCEPTABLE"):
             c.cancel_release(pid)
 
 
@@ -878,6 +911,16 @@ class TestReviewReleaseHardening:
         result = c.review_release(pid)
         assert result == "REVISION_REQUIRED"
 
+    def test_cannot_review_revision_required(self):
+        """REVISION_REQUIRED is terminal — re-review is rejected by the contract."""
+        c = make_contract()
+        sid = create_standard(c)
+        register_clause(c, sid, "1-1")
+        pid = propose_with_add(c, sid, "2-1")
+        c.proposals[pid].status = STATUS_REVISION_REQUIRED
+        with pytest.raises(_GL.vm.UserError):
+            c.review_release(pid)
+
     def test_cannot_review_cancelled_proposal(self):
         c = make_contract()
         sid = create_standard(c)
@@ -908,6 +951,8 @@ class TestReviewReleaseHardening:
             clause_decisions_json="", rationale="",
             proposed_at=0, reviewed_at=0,
             candidate_ids_json="[999]",
+            verified_manifest_digest="",
+            evidence_verified=False,
         )
         with pytest.raises(_GL.vm.UserError, match="stale"):
             c.review_release(99)
@@ -1086,6 +1131,8 @@ class TestFinalizeRelease:
             }]),
             rationale="x", proposed_at=0, reviewed_at=0,
             candidate_ids_json="[0]",
+            verified_manifest_digest=MANIFEST_DIGEST,
+            evidence_verified=True,
         )
         with pytest.raises(_GL.vm.UserError, match="stale"):
             c.finalize_release(pid2)
@@ -1462,6 +1509,8 @@ class TestAdversarialFinalization:
             clause_decisions_json=bad_decisions,
             rationale="bad", proposed_at=p.proposed_at, reviewed_at=0,
             candidate_ids_json=p.candidate_ids_json,
+            verified_manifest_digest=p.manifest_digest,
+            evidence_verified=True,
         )
         with pytest.raises(_GL.vm.UserError, match="non-coherent"):
             c.finalize_release(pid)
