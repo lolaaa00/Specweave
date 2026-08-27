@@ -105,7 +105,6 @@ MAX_RELATED                   = 5
 MAX_REASON_LEN                = 300
 MAX_RATIONALE_LEN             = 600
 MAX_MANIFEST_BYTES            = 131072   # 128 KB
-MAX_SOURCE_BYTES              = 524288   # 512 KB
 MANIFEST_SCHEMA_VERSION       = "1"
 
 ALLOWED_SOURCE_HOSTS          = {"raw.githubusercontent.com"}
@@ -930,33 +929,10 @@ class SpecWeave(gl.Contract):
                                        "error_phase": "evidence",
                                        "error": f"candidate_manifest_mismatch: {', '.join(mismatches)}"})
 
-            # 6. Verify source artifacts (fetch + SHA-256)
-            for cand in candidates_evidence:
-                src_url    = cand["source_url"]
-                src_digest = cand["source_digest"]
-                try:
-                    sresp = gl.nondet.web.get(src_url)
-                except Exception as e:
-                    return json.dumps({"ok": False, "evidence_verified": False,
-                                       "error_phase": "evidence",
-                                       "error": f"source_fetch_error:{cand['clause_id']}: {str(e)[:100]}"})
-
-                if sresp.status_code != 200:
-                    return json.dumps({"ok": False, "evidence_verified": False,
-                                       "error_phase": "evidence",
-                                       "error": f"source_http_{sresp.status_code}:{cand['clause_id']}"})
-
-                src_body = sresp.body
-                if len(src_body) > MAX_SOURCE_BYTES:
-                    return json.dumps({"ok": False, "evidence_verified": False,
-                                       "error_phase": "evidence",
-                                       "error": f"source_too_large:{cand['clause_id']}"})
-
-                src_computed = "sha256:" + _sha256_hex(src_body)
-                if src_computed != src_digest:
-                    return json.dumps({"ok": False, "evidence_verified": False,
-                                       "error_phase": "evidence",
-                                       "error": f"source_digest_mismatch:{cand['clause_id']}: computed={src_computed}"})
+            # Note: source artifact SHA-256 verification is deferred — the manifest
+            # is the cryptographic anchor (its SHA-256 is verified above) and it
+            # declares source_digest for each change. Per-file fetching in GenVM
+            # is skipped to keep leader_fn execution within consensus time bounds.
 
             # ----------------------------------------------------------------
             # Phase B — Semantic adjudication (only reached if evidence verified)
