@@ -84,7 +84,7 @@ The generated wallet is honest about its limits: the UI warns on creation, requi
 
 | Suite | Count | Command |
 |---|---|---|
-| Contract (pytest) | **96 tests** | `python3 -m pytest tests/direct/` |
+| Contract (pytest) | **99 tests** | `python3 -m pytest tests/direct/` |
 | Frontend (vitest) | **16 tests** | `cd apps/web && npx vitest run` |
 
 Contract tests use a local `_GL` stub — no network required. The stub implements `gl.eq_principle.prompt_comparative` (calls `leader_fn()` directly), `gl.vm.UserError`, VecDB, and storage — so the full business logic runs deterministically.
