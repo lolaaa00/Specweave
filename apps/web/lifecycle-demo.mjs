@@ -42,7 +42,7 @@ if (!CONTRACT) {
 // These files are immutable at this commit — changing them would change the SHA-256 digest.
 const COMMIT       = "8f7769e3d1c63a3af0c8e62de56b5cdff3cd04c9";
 const RAW_BASE     = `https://raw.githubusercontent.com/lolaaa00/Specweave/${COMMIT}`;
-const MANIFEST_URL = `https://raw.githubusercontent.com/lolaaa00/Specweave/e426543/demo/standard/manifest-v1.json`;
+const MANIFEST_URL = `https://raw.githubusercontent.com/lolaaa00/Specweave/e4265434f9b96a0fac1185977eea474e1de74047/demo/standard/manifest-v1.json`;
 
 // Real SHA-256 digest of manifest-v1.json (REVISE §1-1 version), verified locally.
 const MANIFEST_DIGEST = "sha256:cefa0d5278756ed58d63a4074273873575a6b5f8d191b3f6bf574c66da8ecdcc";

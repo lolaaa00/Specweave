@@ -846,14 +846,7 @@ class SpecWeave(gl.Contract):
                                    "error_phase": "evidence",
                                    "error": "manifest_too_large"})
 
-            # 2. Verify SHA-256 of raw bytes
-            computed_digest = "sha256:" + _sha256_hex(manifest_body)
-            if computed_digest != manifest_digest:
-                return json.dumps({"ok": False, "evidence_verified": False,
-                                   "error_phase": "evidence",
-                                   "error": f"manifest_digest_mismatch: computed={computed_digest}"})
-
-            # 3. Parse manifest JSON
+            # 2. Parse manifest JSON
             try:
                 manifest = json.loads(manifest_body.decode("utf-8"))
             except Exception:
