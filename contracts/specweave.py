@@ -8,7 +8,6 @@
 import typing
 import json
 import time
-import struct
 import numpy as np
 from dataclasses import dataclass
 from genlayer import *
@@ -54,11 +53,15 @@ def _sha256_hex(data: bytes) -> str:
     msg.append(0x80)
     while len(msg) % 64 != 56:
         msg.append(0)
-    msg += struct.pack(">Q", orig_len)
+    # big-endian uint64 — pure Python, no struct
+    for shift in (56, 48, 40, 32, 24, 16, 8, 0):
+        msg.append((orig_len >> shift) & 0xFF)
 
     for i in range(0, len(msg), 64):
         chunk = msg[i:i + 64]
-        w = list(struct.unpack(">16I", bytes(chunk)))
+        # parse 16 big-endian uint32s — pure Python, no struct
+        w = [(chunk[j*4] << 24) | (chunk[j*4+1] << 16) | (chunk[j*4+2] << 8) | chunk[j*4+3]
+             for j in range(16)]
         for j in range(16, 64):
             s0 = rotr(w[j-15], 7) ^ rotr(w[j-15], 18) ^ (w[j-15] >> 3)
             s1 = rotr(w[j-2], 17) ^ rotr(w[j-2], 19) ^ (w[j-2] >> 10)
