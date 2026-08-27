@@ -42,10 +42,10 @@ if (!CONTRACT) {
 // These files are immutable at this commit — changing them would change the SHA-256 digest.
 const COMMIT       = "8f7769e3d1c63a3af0c8e62de56b5cdff3cd04c9";
 const RAW_BASE     = `https://raw.githubusercontent.com/lolaaa00/Specweave/${COMMIT}`;
-const MANIFEST_URL = `${RAW_BASE}/demo/standard/manifest-v1.json`;
+const MANIFEST_URL = `https://raw.githubusercontent.com/lolaaa00/Specweave/e426543/demo/standard/manifest-v1.json`;
 
-// Real SHA-256 digest of manifest-v1.json at the above commit, verified locally.
-const MANIFEST_DIGEST = "sha256:c56ce19e2c970cc1580f3875bb851f43d33bd8997229983cc02c858cd99b2fe9";
+// Real SHA-256 digest of manifest-v1.json (REVISE §1-1 version), verified locally.
+const MANIFEST_DIGEST = "sha256:cefa0d5278756ed58d63a4074273873575a6b5f8d191b3f6bf574c66da8ecdcc";
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
@@ -109,35 +109,34 @@ async function main() {
     process.exit(0);
   }
 
-  // ------------------------------------------------------------
-  // Candidates — two ADD clauses matching manifest-v1.json exactly
-  // ------------------------------------------------------------
+  // Read the current canonical record ID for §1-1 (first seeded clause = record 0)
+  const clause11 = await client.readContract({ address: CONTRACT, functionName: "get_clause", args: [0] });
+  if (clause11.clause_id !== "1-1") {
+    console.error(`ERROR: record 0 is '${clause11.clause_id}', expected '1-1'. Adjust previous_record_id.`);
+    process.exit(1);
+  }
+  console.log(`§1-1 canonical record ID: 0 (active: ${clause11.active})`);
+
+  // REVISE §1-1 — tightens wording to add explicit validation obligation
   const candidates = [
     {
-      operation: "ADD",
+      operation: "REVISE",
       clause_id: "1-1",
-      previous_record_id: 0,
+      previous_record_id: 0,   // current canonical record for §1-1
       section_path: "1.1",
       normative_level: 0,
-      text: "Every release of a standard governed by SpecWeave MUST be accompanied by a canonical manifest that records the exact set of normative changes, the commit SHA at which those changes were authored, and a cryptographic digest of each source artifact. The manifest itself MUST be published at an immutable, commit-pinned URL before the release proposal is submitted for review.",
-      source_url: `${RAW_BASE}/demo/standard/clauses/clause-1-1-v1.md`,
-      source_digest: "sha256:15dc46fefc59630f2069db998af2bbc60488267301e4b67ab3bf85f2c288579a",
-    },
-    {
-      operation: "ADD",
-      clause_id: "1-2",
-      previous_record_id: 0,
-      section_path: "1.2",
-      normative_level: 0,
-      text: "A release proposal MUST NOT be finalized unless every candidate clause change receives a COHERENT_NEW or COHERENT_SUPERSESSION decision from the GenLayer validator consensus. Proposals containing DUPLICATE_RULE, SEMANTIC_CONFLICT, or INSUFFICIENT_CONTEXT decisions MUST be returned with REVISION_REQUIRED status. The proposer MUST then submit a corrected proposal; an existing proposal with REVISION_REQUIRED status is terminal and cannot be resubmitted for review.",
-      source_url: `${RAW_BASE}/demo/standard/clauses/clause-1-2-v1.md`,
-      source_digest: "sha256:105ab8a5783315b3da999fc3788b2fa41112a7ae0e4713a9634eece9f87e91d0",
+      text: "Every release of a standard governed by SpecWeave MUST be accompanied by a canonical manifest that records the exact set of normative changes, the commit SHA at which those changes were authored, and a cryptographic digest of each source artifact. The manifest itself MUST be published at an immutable, commit-pinned URL before the release proposal is submitted for review. Implementations MUST satisfy all validation steps before the manifest is accepted as evidence.",
+      source_url: `${RAW_BASE}/demo/standard/clauses/clause-1-1-v2.md`,
+      source_digest: "sha256:748648721be1c6d56abed6fd388d62aa44822ffb1546538002d0bea75e1b2db3",
     },
   ];
 
   // ------------------------------------------------------------
   // Step 1 — propose_release
   // ------------------------------------------------------------
+  // proposal_id = current count before propose (IDs are 0-indexed)
+  const proposalId = proposalCount;
+
   const proposeHash = await callWrite(
     client,
     "propose_release",
@@ -152,8 +151,6 @@ async function main() {
     "PROPOSE",
   );
 
-  const newProposalCount = Number(await client.readContract({ address: CONTRACT, functionName: "get_proposal_count", args: [] }));
-  const proposalId = newProposalCount - 1;
   console.log(`\nProposal ID: ${proposalId}`);
 
   // ------------------------------------------------------------
