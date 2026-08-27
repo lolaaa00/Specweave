@@ -8,7 +8,7 @@ import {
   onAccountsChanged, offAccountsChanged, onChainChanged, offChainChanged,
   onDisconnect, offDisconnect,
   createGeneratedAccount, getGeneratedAddress, exportGeneratedKey,
-  importGeneratedKey, clearGeneratedKey,
+  importGeneratedKey, forgetGeneratedKey, markGeneratedBackedUp, isGeneratedBackedUp,
 } from "./genlayer/client";
 import { CHAIN_ID } from "./genlayer/config";
 
@@ -22,12 +22,17 @@ export interface WalletState {
   connectionError: string | null;
   hasProvider: boolean;
   mode: WalletMode;
+  isBackedUp: boolean;
   connect: () => Promise<void>;
   useGeneratedWallet: () => void;
   switchNetwork: () => Promise<void>;
+  /** Disconnect session — does NOT destroy key material. */
   disconnect: () => void;
+  /** Permanently destroy the generated key. Only after explicit user confirmation. */
+  forgetWallet: () => void;
   exportKey: () => string | null;
-  importKey: (key: string) => boolean;
+  acknowledgeBackup: () => void;
+  importKey: (key: string) => string | null;
 }
 
 const WalletContext = createContext<WalletState>({
@@ -38,12 +43,15 @@ const WalletContext = createContext<WalletState>({
   connectionError: null,
   hasProvider: false,
   mode: "none",
+  isBackedUp: false,
   connect: async () => {},
   useGeneratedWallet: () => {},
   switchNetwork: async () => {},
   disconnect: () => {},
+  forgetWallet: () => {},
   exportKey: () => null,
-  importKey: () => false,
+  acknowledgeBackup: () => {},
+  importKey: () => null,
 });
 
 export function WalletProvider({ children }: { children: React.ReactNode }) {
@@ -53,6 +61,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [hasProvider, setHasProvider] = useState(false);
   const [mode, setMode] = useState<WalletMode>("none");
+  const [isBackedUp, setIsBackedUp] = useState(false);
 
   const mounted = useRef(true);
   useEffect(() => {
@@ -70,7 +79,8 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     if (addr) {
       setAccount(addr);
       setMode("generated");
-      setChainId(CHAIN_ID); // Generated wallet always targets StudioNet
+      setChainId(CHAIN_ID);
+      setIsBackedUp(isGeneratedBackedUp());
       return;
     }
 
@@ -148,6 +158,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       setMode("generated");
       setChainId(CHAIN_ID);
       setConnectionError(null);
+      setIsBackedUp(false); // new key, not yet backed up
     }
   }, []);
 
@@ -163,28 +174,43 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   }, [mode]);
 
   const disconnect = useCallback(() => {
-    if (mode === "generated") {
-      clearGeneratedKey();
-    }
+    // Non-destructive: clears session state but NEVER destroys key material.
+    // Use forgetWallet() for deliberate key deletion.
     setAccount(null);
     setChainId(null);
     setMode("none");
     setConnectionError(null);
-  }, [mode]);
+  }, []);
+
+  const forgetWallet = useCallback(() => {
+    // Permanently destroys key — only call after explicit user confirmation.
+    forgetGeneratedKey();
+    setAccount(null);
+    setChainId(null);
+    setMode("none");
+    setIsBackedUp(false);
+    setConnectionError(null);
+  }, []);
 
   const exportKey = useCallback((): string | null => {
     return exportGeneratedKey();
   }, []);
 
-  const importKey = useCallback((key: string): boolean => {
+  const acknowledgeBackup = useCallback(() => {
+    markGeneratedBackedUp();
+    setIsBackedUp(true);
+  }, []);
+
+  const importKey = useCallback((key: string): string | null => {
     const addr = importGeneratedKey(key);
     if (addr) {
       setAccount(addr);
       setMode("generated");
       setChainId(CHAIN_ID);
-      return true;
+      setIsBackedUp(true); // imported key is assumed backed up
+      return addr;
     }
-    return false;
+    return null;
   }, []);
 
   const isCorrectNetwork = mode === "generated" ? true : chainId === CHAIN_ID;
@@ -192,8 +218,9 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   return (
     <WalletContext.Provider value={{
       account, chainId, isCorrectNetwork, isConnecting, connectionError,
-      hasProvider, mode,
-      connect, useGeneratedWallet, switchNetwork, disconnect, exportKey, importKey,
+      hasProvider, mode, isBackedUp,
+      connect, useGeneratedWallet, switchNetwork, disconnect, forgetWallet,
+      exportKey, acknowledgeBackup, importKey,
     }}>
       {children}
     </WalletContext.Provider>

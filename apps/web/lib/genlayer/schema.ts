@@ -41,7 +41,8 @@ export interface Standard {
   canonical_manifest_digest: string;
   initial_manifest_url: string;
   initial_manifest_digest: string;
-  clause_count: number;
+  clause_count: number;          // total canonical records ever created (includes history)
+  active_clause_count: number;   // currently active logical clauses
   active: boolean;
   editor_count: number;
 }

@@ -23,7 +23,7 @@ export default function CanonicalReceipt() {
   }, []);
 
   const receipt = standard ? {
-    specweave_version: "1.0",
+    receipt_schema_version: "1",
     chain: "studionet",
     chain_id: CHAIN_ID,
     contract: CONTRACT_ADDRESS,
@@ -32,9 +32,12 @@ export default function CanonicalReceipt() {
     standard_name: standard.name,
     canonical_version: standard.canonical_version,
     canonical_manifest_digest: standard.canonical_manifest_digest,
-    clause_count: standard.clause_count,
+    // total canonical records ever created (includes superseded history)
+    canonical_record_count: standard.clause_count,
+    active_clause_count: standard.active_clause_count,
     steward: standard.steward,
-    generated_at: new Date().toISOString(),
+    // client-side timestamp — not part of on-chain state
+    client_generated_at: new Date().toISOString(),
   } : null;
 
   const receiptJson = receipt ? JSON.stringify(receipt, null, 2) : "";
@@ -52,7 +55,7 @@ export default function CanonicalReceipt() {
       <div style={{ marginBottom: "1.25rem" }}>
         <h1 style={{ fontWeight: 700, fontSize: "18px", margin: "0 0 0.25rem" }}>Canonical Receipt</h1>
         <p style={{ margin: 0, fontSize: "12px", color: "var(--ink-muted)" }}>
-          Machine-oriented current version, clause digest root and integration data.
+          Machine-readable canonical state: version, canonical manifest digest, and integration data.
           Read-only. Sourced live from the deployed contract.
         </p>
       </div>
@@ -77,8 +80,9 @@ export default function CanonicalReceipt() {
               </div>
             </div>
             <div style={{ border: "1px solid var(--border)", borderRadius: "2px", padding: "0.75rem" }}>
-              <span className="spec-label">Clause count</span>
-              <div style={{ marginTop: "0.25rem", fontSize: "20px", fontWeight: 700 }}>{receipt.clause_count}</div>
+              <span className="spec-label">Active clauses</span>
+              <div style={{ marginTop: "0.25rem", fontSize: "20px", fontWeight: 700 }}>{receipt.active_clause_count}</div>
+              <div style={{ fontSize: "10px", color: "var(--ink-faint)", marginTop: "0.15rem" }}>{receipt.canonical_record_count} total records (incl. history)</div>
             </div>
           </div>
 
@@ -120,7 +124,7 @@ export default function CanonicalReceipt() {
           </div>
 
           <div style={{ marginTop: "1rem", fontSize: "11px", color: "var(--ink-faint)" }}>
-            Receipt generated at: {receipt.generated_at}. Data sourced live from contract — not cached.
+            Receipt client_generated_at: {receipt.client_generated_at}. Data sourced live from contract — not cached.
           </div>
         </>
       )}

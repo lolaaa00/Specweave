@@ -14,8 +14,9 @@ declare global {
   }
 }
 
-const GENERATED_KEY_STORAGE = "specweave:generated_pk";
+const GENERATED_KEY_STORAGE  = "specweave:generated_pk";
 const GENERATED_ADDR_STORAGE = "specweave:generated_addr";
+const GENERATED_BACKED_UP    = "specweave:generated_backed_up";
 
 // ---------------------------------------------------------------------------
 // Generated wallet (localStorage-persisted)
@@ -55,24 +56,49 @@ export function exportGeneratedKey(): string | null {
 export function importGeneratedKey(privateKey: string): string | null {
   if (typeof window === "undefined") return null;
   try {
-    const trimmed = privateKey.trim() as `0x${string}`;
-    const acct = createAccount(trimmed);
+    // Exact validation: 0x + exactly 64 hex characters
+    const trimmed = privateKey.trim();
+    if (!/^0x[0-9a-fA-F]{64}$/.test(trimmed)) return null;
+    const acct = createAccount(trimmed as `0x${string}`);
     localStorage.setItem(GENERATED_KEY_STORAGE, trimmed);
     localStorage.setItem(GENERATED_ADDR_STORAGE, acct.address);
+    // Imported key is assumed to be already backed up by the user
+    localStorage.setItem(GENERATED_BACKED_UP, "true");
     return acct.address;
   } catch {
     return null;
   }
 }
 
-export function clearGeneratedKey(): void {
+/** Mark the generated wallet as backed up (user acknowledged export). */
+export function markGeneratedBackedUp(): void {
+  if (typeof window === "undefined") return;
+  try { localStorage.setItem(GENERATED_BACKED_UP, "true"); } catch { /* ignore */ }
+}
+
+/** Returns whether the user has acknowledged backing up the generated key. */
+export function isGeneratedBackedUp(): boolean {
+  if (typeof window === "undefined") return false;
+  try { return localStorage.getItem(GENERATED_BACKED_UP) === "true"; } catch { return false; }
+}
+
+/**
+ * Permanently destroy the generated wallet key from localStorage.
+ * This is irreversible — only call after confirmed user intent.
+ */
+export function forgetGeneratedKey(): void {
   if (typeof window === "undefined") return;
   try {
     localStorage.removeItem(GENERATED_KEY_STORAGE);
     localStorage.removeItem(GENERATED_ADDR_STORAGE);
-  } catch {
-    // ignore
-  }
+    localStorage.removeItem(GENERATED_BACKED_UP);
+  } catch { /* ignore */ }
+}
+
+/** @deprecated Use forgetGeneratedKey() for destructive removal. clearGeneratedKey is now a no-op alias. */
+export function clearGeneratedKey(): void {
+  // Intentionally does NOT clear key — disconnect must be non-destructive.
+  // Call forgetGeneratedKey() for deliberate key deletion.
 }
 
 // ---------------------------------------------------------------------------
